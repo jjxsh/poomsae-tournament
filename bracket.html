@@ -17,12 +17,6 @@
       margin-bottom: 10px;
     }
 
-    #champion {
-      font-size: 2rem;
-      color: #FFD700;
-      margin-bottom: 20px;
-    }
-
     textarea {
       width: 100%;
       max-width: 500px;
@@ -104,25 +98,64 @@
       opacity: 0.8;
     }
 
+    #champion-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: #FFD700;
+      font-size: 2rem;
+      z-index: 9999;
+      display: none;
+    }
+
+    #champion-popup button {
+      margin-top: 20px;
+      font-size: 1rem;
+      padding: 10px 20px;
+      background-color: #444;
+      color: white;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    #champion-popup button:hover {
+      background-color: #666;
+    }
+
     @media (max-width: 600px) {
       .match {
         min-width: 130px;
       }
 
-      #champion {
+      #champion-popup {
         font-size: 1.5rem;
+        padding: 20px;
+        text-align: center;
       }
     }
   </style>
 </head>
 <body>
   <h1>Tournament Bracket</h1>
-  <div id="champion"></div>
   <p>Enter one athlete name per line:</p>
   <textarea id="athleteInput" placeholder="Athlete 1&#10;Athlete 2&#10;Athlete 3..."></textarea><br />
   <button onclick="generateBracket()">Generate Bracket</button>
 
   <div class="bracket" id="bracketContainer"></div>
+
+  <!-- Champion Popup -->
+  <div id="champion-popup">
+    <div id="champion-text">🏆 Champion: NAME 🏆</div>
+    <button onclick="closeChampion()">Close</button>
+  </div>
 
   <script>
     let bracketData = [];
@@ -165,13 +198,15 @@
         currentRound /= 2;
       }
 
-      document.getElementById("champion").textContent = "";
+      document.getElementById("champion-popup").style.display = "none";
       renderBracket();
     }
 
     function renderBracket() {
       const container = document.getElementById("bracketContainer");
-      const championEl = document.getElementById("champion");
+      const popup = document.getElementById("champion-popup");
+      const championText = document.getElementById("champion-text");
+
       container.innerHTML = "";
 
       bracketData.forEach((round, roundIndex) => {
@@ -225,10 +260,16 @@
         container.appendChild(roundDiv);
       });
 
-      const lastRound = bracketData.at(-1);
-      if (lastRound.length === 1 && lastRound[0].winner) {
-        championEl.textContent = `🏆 Champion: ${lastRound[0].winner} 🏆`;
+      // Show final popup if champion is selected
+      const lastMatch = bracketData.at(-1)[0];
+      if (lastMatch.winner) {
+        championText.textContent = `🏆 Champion: ${lastMatch.winner} 🏆`;
+        popup.style.display = "flex";
       }
+    }
+
+    function closeChampion() {
+      document.getElementById("champion-popup").style.display = "none";
     }
   </script>
 </body>
