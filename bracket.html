@@ -38,7 +38,7 @@
       background-color: #007BFF;
       color: white;
       cursor: pointer;
-      margin-bottom: 20px;
+      margin: 5px;
     }
 
     button:hover {
@@ -147,7 +147,8 @@
   <h1>Tournament Bracket</h1>
   <p>Enter one athlete name per line:</p>
   <textarea id="athleteInput" placeholder="Athlete 1&#10;Athlete 2&#10;Athlete 3..."></textarea><br />
-  <button onclick="generateBracket()">Generate Bracket</button>
+  <button onclick="generateBracket(false)">Generate Bracket</button>
+  <button onclick="generateBracket(true)">Shuffle & Generate Bracket</button>
 
   <div class="bracket" id="bracketContainer"></div>
 
@@ -160,18 +161,27 @@
   <script>
     let bracketData = [];
 
-    function generateBracket() {
+    function generateBracket(shuffle = false) {
       const input = document.getElementById("athleteInput").value.trim();
-      const names = input.split("\n").map(n => n.trim()).filter(n => n);
+      let names = input.split("\n").map(n => n.trim()).filter(n => n);
 
       if (names.length < 2) {
         alert("Enter at least 2 athlete names.");
         return;
       }
 
+      // 🔀 Shuffle if requested
+      if (shuffle) {
+        for (let i = names.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [names[i], names[j]] = [names[j], names[i]];
+        }
+      }
+
       const totalSlots = Math.pow(2, Math.ceil(Math.log2(names.length)));
       const filled = [...names];
 
+      // Insert BYEs every other slot to avoid BYE vs BYE
       let matchCount = totalSlots / 2;
       for (let i = 0; i < matchCount && filled.length < totalSlots; i++) {
         const insertIndex = (i * 2) + 1;
@@ -260,7 +270,6 @@
         container.appendChild(roundDiv);
       });
 
-      // Show final popup if champion is selected
       const lastMatch = bracketData.at(-1)[0];
       if (lastMatch.winner) {
         championText.textContent = `🏆 Champion: ${lastMatch.winner} 🏆`;
