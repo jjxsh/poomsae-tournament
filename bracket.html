@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tournament Bracket</title>
+  <style>
+    body {
+      background-color: #000;
+      color: white;
+      font-family: sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #champion {
+      font-size: 2rem;
+      color: #FFD700;
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      max-width: 500px;
+      height: 150px;
+      font-size: 1rem;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #111;
+      color: white;
+      border: 1px solid #333;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .bracket {
+      display: flex;
+      overflow-x: auto;
+      gap: 30px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+
+    .round {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      transition: opacity 0.3s;
+    }
+
+    .round.dimmed {
+      opacity: 0.4;
+    }
+
+    .match {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 1px solid #555;
+      background: #111;
+      border-radius: 8px;
+      padding: 10px;
+      min-width: 160px;
+    }
+
+    .match button {
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #666;
+      padding: 6px;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+
+    .match button:hover {
+      background-color: #007BFF;
+    }
+
+    .winner {
+      background-color: #28a745 !important;
+      font-weight: bold;
+    }
+
+    .loser {
+      background-color: #dc3545 !important;
+      opacity: 0.8;
+    }
+
+    @media (max-width: 600px) {
+      .match {
+        min-width: 130px;
+      }
+
+      #champion {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Tournament Bracket</h1>
+  <div id="champion"></div>
+  <p>Enter one athlete name per line:</p>
+  <textarea id="athleteInput" placeholder="Athlete 1&#10;Athlete 2&#10;Athlete 3..."></textarea><br />
+  <button onclick="generateBracket()">Generate Bracket</button>
+
+  <div class="bracket" id="bracketContainer"></div>
+
+  <script>
+    let bracketData = [];
+
+    function generateBracket() {
+      const input = document.getElementById("athleteInput").value.trim();
+      const names = input.split("\n").map(n => n.trim()).filter(n => n);
+
+      if (names.length < 2) {
+        alert("Enter at least 2 athlete names.");
+        return;
+      }
+
+      const totalSlots = Math.pow(2, Math.ceil(Math.log2(names.length)));
+      const filled = [...names];
+
+      let matchCount = totalSlots / 2;
+      for (let i = 0; i < matchCount && filled.length < totalSlots; i++) {
+        const insertIndex = (i * 2) + 1;
+        filled.splice(insertIndex, 0, "BYE");
+      }
+
+      const firstRound = [];
+      for (let i = 0; i < filled.length; i += 2) {
+        firstRound.push({
+          players: [filled[i], filled[i + 1]],
+          winner: ""
+        });
+      }
+
+      bracketData = [firstRound];
+
+      let currentRound = firstRound.length;
+      while (currentRound > 1) {
+        const nextRound = Array.from({ length: currentRound / 2 }, () => ({
+          players: ["Waiting", "Waiting"],
+          winner: ""
+        }));
+        bracketData.push(nextRound);
+        currentRound /= 2;
+      }
+
+      document.getElementById("champion").textContent = "";
+      renderBracket();
+    }
+
+    function renderBracket() {
+      const container = document.getElementById("bracketContainer");
+      const championEl = document.getElementById("champion");
+      container.innerHTML = "";
+
+      bracketData.forEach((round, roundIndex) => {
+        const roundDiv = document.createElement("div");
+        roundDiv.className = "round";
+
+        const isRoundComplete = round.every(match => match.winner);
+        if (isRoundComplete) {
+          roundDiv.classList.add("dimmed");
+        }
+
+        round.forEach((match, matchIndex) => {
+          const matchDiv = document.createElement("div");
+          matchDiv.className = "match";
+
+          if (roundIndex === 0 || match.players.some(p => p !== "Waiting")) {
+            match.players.forEach(player => {
+              const btn = document.createElement("button");
+              btn.textContent = player;
+              if (player === "BYE") btn.disabled = true;
+
+              btn.onclick = () => {
+                match.winner = player;
+
+                if (bracketData[roundIndex + 1]) {
+                  const nextMatch = bracketData[roundIndex + 1][Math.floor(matchIndex / 2)];
+                  const slot = matchIndex % 2;
+                  nextMatch.players[slot] = player;
+                }
+
+                renderBracket();
+              };
+
+              if (match.winner) {
+                if (match.winner === player) {
+                  btn.classList.add("winner");
+                } else {
+                  btn.classList.add("loser");
+                }
+              }
+
+              matchDiv.appendChild(btn);
+            });
+          } else {
+            matchDiv.innerHTML = "<span>Waiting...</span>";
+          }
+
+          roundDiv.appendChild(matchDiv);
+        });
+
+        container.appendChild(roundDiv);
+      });
+
+      const lastRound = bracketData.at(-1);
+      if (lastRound.length === 1 && lastRound[0].winner) {
+        championEl.textContent = `🏆 Champion: ${lastRound[0].winner} 🏆`;
+      }
+    }
+  </script>
+</body>
+</html>

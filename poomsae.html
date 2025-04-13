@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Poomsae Selection</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #000;
+      color: #fff;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .dropdowns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.95rem;
+    }
+
+    select {
+      font-size: 1.05rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background-color: #111;
+      color: #fff;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #007BFF;
+      color: white;
+      margin-top: 10px;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result {
+      font-size: 2.2rem;
+      font-weight: bold;
+      margin: 15px 0;
+      word-wrap: break-word;
+      text-align: center;
+    }
+
+    .warning {
+      color: #ff4d4d;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      .result {
+        font-size: 1.8rem;
+      }
+      .dropdowns {
+        flex-direction: column;
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Poomsae Selection</h1>
+
+  <div class="dropdowns">
+    <label>
+      Division:
+      <select id="division-select" onchange="applyDivisionPreset()">
+        <option value="">-- Custom --</option>
+        <option value="cadet">Cadet</option>
+        <option value="junior">Junior</option>
+        <option value="u30">U30 / U40</option>
+        <option value="u50">U50</option>
+        <option value="u60">U60 / U65 / O65</option>
+      </select>
+    </label>
+    <label>
+      Start With:
+      <select id="start-select"></select>
+    </label>
+    <label>
+      End With:
+      <select id="end-select"></select>
+    </label>
+  </div>
+
+  <button onclick="generatePoomsae()">Generate</button>
+
+  <div class="result" id="poomsae1">–</div>
+  <div class="result" id="poomsae2">–</div>
+  <div class="warning" id="warning"></div>
+
+  <script>
+    const fullList = [
+      "Taegeuk 4",   // 0
+      "Taegeuk 5",   // 1
+      "Taegeuk 6",   // 2
+      "Taegeuk 7",   // 3
+      "Taegeuk 8",   // 4
+      "Koryo",       // 5
+      "Keumgang",    // 6
+      "Taebaek",     // 7
+      "Pyongwon",    // 8
+      "Shipjin",     // 9
+      "Jitae",       //10
+      "Chonkwon",    //11
+      "Hansu"        //12
+    ];
+
+    const startSelect = document.getElementById("start-select");
+    const endSelect = document.getElementById("end-select");
+    const divisionSelect = document.getElementById("division-select");
+    const warningDiv = document.getElementById("warning");
+
+    function populateDropdowns() {
+      startSelect.innerHTML = "";
+      endSelect.innerHTML = "";
+
+      fullList.forEach((poomsae, index) => {
+        startSelect.appendChild(new Option(poomsae, index));
+        endSelect.appendChild(new Option(poomsae, index));
+      });
+
+      startSelect.value = 0;
+      endSelect.value = fullList.length - 1;
+    }
+
+    function updateRangeOptions() {
+      const startIndex = parseInt(startSelect.value);
+      const endIndex = parseInt(endSelect.value);
+      if (startIndex > endIndex) {
+        warningDiv.textContent = "Start must be before end.";
+      } else {
+        warningDiv.textContent = "";
+      }
+    }
+
+    function applyDivisionPreset() {
+      const division = divisionSelect.value;
+      const presets = {
+        cadet: [0, 6],   // Taegeuk 4 → Keumgang
+        junior: [1, 7],  // Taegeuk 5 → Taebaek
+        u30: [3, 9],     // Taegeuk 7 → Shipjin
+        u50: [4, 10],    // Taegeuk 8 → Jitae
+        u60: [5, 11]     // Koryo → Chonkwon
+      };
+
+      if (presets[division]) {
+        startSelect.value = presets[division][0];
+        endSelect.value = presets[division][1];
+        updateRangeOptions();
+      }
+    }
+
+    function generatePoomsae() {
+      const startIndex = parseInt(startSelect.value);
+      const endIndex = parseInt(endSelect.value);
+
+      if (startIndex > endIndex) {
+        warningDiv.textContent = "Start must be before end.";
+        return;
+      }
+
+      const range = fullList.slice(startIndex, endIndex + 1);
+
+      if (range.length < 2) {
+        document.getElementById("poomsae1").textContent = "–";
+        document.getElementById("poomsae2").textContent = "–";
+        warningDiv.textContent = "Please select at least two poomsae.";
+        return;
+      }
+
+      warningDiv.textContent = "";
+
+      let index1 = Math.floor(Math.random() * range.length);
+      let index2;
+      do {
+        index2 = Math.floor(Math.random() * range.length);
+      } while (index2 === index1);
+
+      document.getElementById("poomsae1").textContent = range[index1];
+      document.getElementById("poomsae2").textContent = range[index2];
+    }
+
+    // Initialize
+    populateDropdowns();
+    startSelect.addEventListener("change", updateRangeOptions);
+    endSelect.addEventListener("change", updateRangeOptions);
+  </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Color Screen</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #000;
+      transition: background-color 0.3s ease;
+    }
+
+    .corner-btn {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .red-btn {
+      top: 20px;
+      left: 20px;
+      background-color: #dc3545;
+    }
+
+    .blue-btn {
+      top: 20px;
+      right: 20px;
+      background-color: #007BFF;
+    }
+
+    .red-btn:hover,
+    .blue-btn:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <button class="corner-btn red-btn" onclick="setColor('red')"></button>
+  <button class="corner-btn blue-btn" onclick="setColor('blue')"></button>
+
+  <script>
+    function setColor(color) {
+      document.body.style.backgroundColor = color;
+    }
+  </script>
+</body>
+</html>
